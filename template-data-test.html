@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="x5-orientation" content="portrait">
+    <meta name="full-screen" content="yes">
+    <meta name="x5-fullscreen" content="true">
+    <meta name="browsermode" content="application">
+    <meta name="x5-page-mode" content="app">
+    <title>js-template-数据测试应用</title>
+    <script src="js/jquery-1.11.3.min.js"></script>
+    <script src="js/template.js"></script>
+    <style>
+        .container{ width: 100%; height: 1500px; background-color: #56aae5; }
+        .tit{ font-size: 30px; color: #fff;}
+    </style>
+</head>
+<body >
+
+<section class="container">
+    <h1 class="tit">此处占位：向下滑动~渲染结构内容</h1>
+</section>
+
+<div id="load-html">
+    <ul id="list">
+
+    </ul>
+</div>
+
+<div class="getMore" id="getMore" data-html="───────我是有底线的───────" >───────我是有底线的───────</div>
+
+<!--模版结构-->
+<script type="text/html" id="t_list">
+    {{if list.length==0}}
+    <li></li>
+    {{else}}
+    {{each list as v i}}
+    <li>
+        <div class="item">
+            <div class="tp">
+                <a href="javascript:;">
+                    <img class="lazy" src="{{v.img}}" alt="" title="">
+                </a>
+                <i data-id="" class="ico icoLove js-love" ></i>
+                {{if v.tag==0}}
+                <span class="lab"></span>
+                {{else if v.tag==1}}
+                <span class="lab labTj"></span>
+                {{else if v.tag==2}}
+                <span class="lab labNew"></span>
+                {{/if}}
+            </div>
+            <div class="txt">
+                <p class="tiName">
+                    <a href="javascript:;">{{v.title}}</a>
+                </p>
+                <div class="bot">
+                    {{if v.state==0}}
+                    <div class="money fl">
+                        <em class="num">{{v.cost}}</em>学习币
+                    </div>
+                    {{else}}
+                    <div class="money moneyNo fl">
+                        <em class="num">{{v.cost}}</em>学习币
+                    </div>
+                    {{/if}}
+                    <div class="handle fr">
+                        <a href="javascript:;">
+                            {{if v.state==0}}
+                            <i class="ico icoBuy"></i>
+                            <span class="ti00">购买</span>
+                            {{else}}
+                            <i class="ico icoPlay"></i>
+                            <span class="ti00">播放</span>
+                            {{/if}}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </li>
+    {{/each}}
+    {{/if}}
+</script>
+
+<!--滑动渲染加载数据：-->
+<script>
+    //json字符串处理
+    function parseData(d) {
+        return typeof(d) == 'string' ? JSON.parse(d) : d;
+    }
+    //定义方法
+    let page  = 1,
+        isEnd = false;
+    $(window).scroll(function () {
+        let $bd = $("#list"),
+            $getMore = $("#getMore"),
+            html = "",
+            scrTop = $(document).scrollTop(),
+            nowHig = ($(document).height() - $(window).height());
+        if ( scrTop >= nowHig ) {
+            $.ajax({
+                type    : "get",
+                url     : "json/test.json",
+                data    : {'page':page},
+                dataType:   "json",
+                beforeSend(){
+                    if (isEnd) {
+                        return false;
+                    }
+                },
+                success(data){
+                    var d = parseData(data);
+                    console.log(d);
+                    if(d.status==1){
+                        //生成数据
+                        var allList = d.allList,
+                            newList = [];
+                        console.log(allList)
+                        for(var k in allList){
+                            var value = allList[k];
+                            newList[k] = value.map(function (v) {
+                                return v;
+                            });
+                            console.log(newList[k]);
+                        }
+                        //判断页码:
+                        let {totalPage: totalPage, page: currentPage} = d;
+                        page++;
+                        $getMore.show();
+                        if (currentPage == totalPage) {
+                            isEnd = true;
+                            $getMore.show().html($getMore.data('html'));
+                        }
+                    }
+                    //渲染结构
+                    html = template("t_list",newList);
+                    $bd.append(html);
+                },
+                complete(){
+                    console.log(isEnd);  //true
+                }
+            })
+        }
+    });
+</script>
+
+</body>
+</html>
